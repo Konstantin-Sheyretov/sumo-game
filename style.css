@@ -1,0 +1,120 @@
+:root {
+  --bg: #f6f3ee;
+  --fg: #222;
+  --cell: #fff;
+  --cell-border: #c9c2b6;
+  --target: #fff3c4;
+  --target-hover: #ffe58a;
+  --p1: #d94841;
+  --p2: #2f7ed8;
+  --p3: #2ca25f;
+  --p4: #e0a100;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1b1b1d;
+    --fg: #eee;
+    --cell: #2a2a2e;
+    --cell-border: #44444a;
+    --target: #4a4320;
+    --target-hover: #6b5f22;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+main {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+h1 { margin: 0 0 8px; }
+
+#status {
+  font-size: 1.15rem;
+  font-weight: 600;
+  min-height: 1.5em;
+}
+
+#board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  width: 100%;
+  aspect-ratio: 1;
+  margin: 12px auto;
+}
+
+.cell {
+  position: relative;
+  background: var(--cell);
+  border: 2px solid var(--cell-border);
+  border-radius: 8px;
+  padding: 0;
+  cursor: default;
+  font: inherit;
+  color: inherit;
+}
+
+.cell.target {
+  background: var(--target);
+  cursor: pointer;
+}
+
+.cell.target:hover,
+.cell.target:focus-visible {
+  background: var(--target-hover);
+  outline: none;
+}
+
+.pawn {
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: clamp(1rem, 5vw, 1.6rem);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.pawn.active {
+  outline: 4px solid var(--fg);
+  outline-offset: 3px;
+}
+
+.p1 { background: var(--p1); }
+.p2 { background: var(--p2); }
+.p3 { background: var(--p3); }
+.p4 { background: var(--p4); }
+
+.hint { opacity: 0.7; font-size: 0.9rem; }
+
+button#reset {
+  font: inherit;
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: 1px solid var(--cell-border);
+  background: var(--cell);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+#log {
+  text-align: left;
+  max-height: 180px;
+  overflow-y: auto;
+  font-size: 0.9rem;
+  padding-left: 20px;
+}

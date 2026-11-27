@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sumo Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>Sumo Game</h1>
+    <p id="status" aria-live="polite"></p>
+    <div id="board" role="grid" aria-label="4 by 4 game board"></div>
+    <p class="hint">Click a highlighted square next to your pawn, or use the arrow keys.</p>
+    <div class="controls">
+      <button id="reset" type="button">Restart</button>
+    </div>
+    <ul id="log" aria-label="Move history"></ul>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
