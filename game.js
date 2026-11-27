@@ -24,33 +24,39 @@
   let players;
   let current;
   let turn;
+  let winner;
 
   function reset() {
-    players = START_POSITIONS.map((pos, i) => ({ id: i, name: NAMES[i], ...pos }));
+    players = START_POSITIONS.map((pos, i) => ({ id: i, name: NAMES[i], alive: true, ...pos }));
     current = 0;
     turn = 1;
+    winner = null;
     logEl.innerHTML = "";
-    skipIfStuck();
     render();
   }
 
+  function alivePlayers() {
+    return players.filter((p) => p.alive);
+  }
+
   function playerAt(row, col) {
-    return players.find((p) => p.row === row && p.col === col);
+    return players.find((p) => p.alive && p.row === row && p.col === col);
   }
 
   function inBounds(row, col) {
     return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
   }
 
-  // A pawn moves exactly one space up, down, left or right onto an empty square.
+  // A pawn may step one square up, down, left or right, as long as it stays on
+  // the board. If the square is occupied, the pawns in that line are pushed.
   function legalMoves(player) {
     return Object.values(DIRECTIONS)
-      .map((d) => ({ row: player.row + d.row, col: player.col + d.col }))
-      .filter((m) => inBounds(m.row, m.col) && !playerAt(m.row, m.col));
+      .map((d) => ({ row: player.row + d.row, col: player.col + d.col, d }))
+      .filter((m) => inBounds(m.row, m.col));
   }
 
-  function isLegal(player, row, col) {
-    return legalMoves(player).some((m) => m.row === row && m.col === col);
+  function findMove(player, row, col) {
+    return legalMoves(player).find((m) => m.row === row && m.col === col);
   }
 
   function cellName(row, col) {
@@ -64,37 +70,65 @@
   }
 
   function nextPlayer() {
-    current = (current + 1) % players.length;
-    if (current === 0) turn++;
-    skipIfStuck();
-  }
-
-  // With 4 pawns on 16 squares a pawn can be boxed in; it then passes.
-  function skipIfStuck() {
-    for (let i = 0; i < players.length; i++) {
-      if (legalMoves(players[current]).length > 0) return;
-      log(`${players[current].name} is blocked and passes.`);
+    do {
       current = (current + 1) % players.length;
       if (current === 0) turn++;
-    }
+    } while (!players[current].alive);
   }
 
   function move(row, col) {
+    if (winner) return;
     const player = players[current];
-    if (!isLegal(player, row, col)) return;
+    const m = findMove(player, row, col);
+    if (!m) return;
+
+    // Collect the contiguous line of pawns in front of the mover.
+    const chain = [];
+    let r = m.row;
+    let c = m.col;
+    let p;
+    while (inBounds(r, c) && (p = playerAt(r, c))) {
+      chain.push(p);
+      r += m.d.row;
+      c += m.d.col;
+    }
+
+    // Shift the line from the far end; anything leaving the board is out.
     const from = cellName(player.row, player.col);
-    player.row = row;
-    player.col = col;
-    log(`Turn ${turn}: ${player.name} ${from} → ${cellName(row, col)}`);
-    nextPlayer();
+    for (let i = chain.length - 1; i >= 0; i--) {
+      const q = chain[i];
+      q.row += m.d.row;
+      q.col += m.d.col;
+      if (!inBounds(q.row, q.col)) q.alive = false;
+    }
+    player.row = m.row;
+    player.col = m.col;
+
+    let text = `Turn ${turn}: ${player.name} ${from} → ${cellName(m.row, m.col)}`;
+    const pushed = chain.filter((q) => q.alive).map((q) => q.name);
+    if (pushed.length) text += `, pushing ${pushed.join(" and ")}`;
+    log(text);
+    chain
+      .filter((q) => !q.alive)
+      .forEach((q) => log(`${q.name} was pushed off the board by ${player.name} and is out!`));
+
+    const remaining = alivePlayers();
+    if (remaining.length === 1) {
+      winner = remaining[0];
+      log(`${winner.name} wins!`);
+    } else {
+      nextPlayer();
+    }
     render();
   }
 
   function render() {
-    const player = players[current];
-    const targets = legalMoves(player);
-    statusEl.textContent = `Turn ${turn} — ${player.name}'s move`;
-    statusEl.style.color = `var(--p${current + 1})`;
+    const player = winner || players[current];
+    const targets = winner ? [] : legalMoves(player);
+    statusEl.textContent = winner
+      ? `${winner.name} wins!`
+      : `Turn ${turn} — ${player.name}'s move`;
+    statusEl.style.color = `var(--p${player.id + 1})`;
 
     boardEl.innerHTML = "";
     for (let row = 0; row < SIZE; row++) {
@@ -110,15 +144,16 @@
         if (occupant) {
           const pawn = document.createElement("span");
           pawn.className = `pawn p${occupant.id + 1}`;
-          if (occupant.id === current) pawn.classList.add("active");
+          if (occupant.id === player.id) pawn.classList.add("active");
           pawn.textContent = occupant.id + 1;
           cell.appendChild(pawn);
           label += `, ${occupant.name} pawn`;
         }
         if (isTarget) {
           cell.classList.add("target");
+          if (occupant) cell.classList.add("push");
           cell.addEventListener("click", () => move(row, col));
-          label += ", move here";
+          label += occupant ? ", push here" : ", move here";
         } else {
           cell.tabIndex = -1;
         }
@@ -126,12 +161,31 @@
         boardEl.appendChild(cell);
       }
     }
+
+    renderRoster();
+  }
+
+  function renderRoster() {
+    let roster = document.getElementById("roster");
+    if (!roster) {
+      roster = document.createElement("div");
+      roster.id = "roster";
+      statusEl.after(roster);
+    }
+    roster.innerHTML = "";
+    players.forEach((p) => {
+      const tag = document.createElement("span");
+      tag.className = `tag p${p.id + 1}` + (p.alive ? "" : " out");
+      tag.textContent = p.alive ? p.name : `${p.name} (out)`;
+      roster.appendChild(tag);
+    });
   }
 
   document.addEventListener("keydown", (e) => {
     const d = DIRECTIONS[e.key];
     if (!d) return;
     e.preventDefault();
+    if (winner) return;
     const p = players[current];
     move(p.row + d.row, p.col + d.col);
   });

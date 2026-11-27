@@ -1,8 +1,10 @@
 # Sumo Game
 
-A browser game for 4 players on a 4×4 grid. Players take turns; on each turn the
-current player moves their pawn exactly one space up, down, left or right onto an
-empty square. A pawn with no free neighbouring square passes its turn.
+A browser sumo game for 4 players on a 4×4 grid. Players take turns; on each turn the
+current player moves their pawn exactly one space up, down, left or right (a pawn
+can't step off the board by itself). Moving into an occupied square pushes that pawn,
+and any pawns lined up behind it, one space. A pawn pushed off the edge is out — the
+last pawn standing wins.
 
 ## Play
 
