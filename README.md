@@ -13,7 +13,5 @@ To play locally, open `index.html` in a browser — no build step needed.
 
 ## Hosting on GitHub Pages
 
-`.github/workflows/pages.yml` deploys the site on every push to `main`.
-One-time setup: in the repository go to **Settings → Pages** and set
-**Source** to **GitHub Actions**. The game is then served at
-`https://<owner>.github.io/sumo-game/`.
+The site is served by GitHub Pages straight from the `main` branch (Settings → Pages →
+Deploy from a branch), at https://konstantin-sheyretov.github.io/sumo-game/.
