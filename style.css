@@ -101,6 +101,22 @@ h1 { margin: 0 0 8px; }
 
 .hint { opacity: 0.7; font-size: 0.9rem; }
 
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+button#stay:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.cell.stay {
+  cursor: pointer;
+}
+
+button#stay,
 button#reset {
   font: inherit;
   padding: 8px 18px;

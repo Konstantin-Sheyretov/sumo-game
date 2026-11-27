@@ -20,6 +20,7 @@
   const statusEl = document.getElementById("status");
   const logEl = document.getElementById("log");
   const resetBtn = document.getElementById("reset");
+  const stayBtn = document.getElementById("stay");
 
   let players;
   let current;
@@ -74,6 +75,15 @@
       current = (current + 1) % players.length;
       if (current === 0) turn++;
     } while (!players[current].alive);
+  }
+
+  // The current player keeps their pawn where it is and ends their turn.
+  function stay() {
+    if (winner) return;
+    const player = players[current];
+    log(`Turn ${turn}: ${player.name} stays on ${cellName(player.row, player.col)}`);
+    nextPlayer();
+    render();
   }
 
   function move(row, col) {
@@ -149,7 +159,11 @@
           cell.appendChild(pawn);
           label += `, ${occupant.name} pawn`;
         }
-        if (isTarget) {
+        if (!winner && occupant && occupant.id === player.id) {
+          cell.classList.add("stay");
+          cell.addEventListener("click", stay);
+          label += ", stay here";
+        } else if (isTarget) {
           cell.classList.add("target");
           if (occupant) cell.classList.add("push");
           cell.addEventListener("click", () => move(row, col));
@@ -162,6 +176,7 @@
       }
     }
 
+    stayBtn.disabled = Boolean(winner);
     renderRoster();
   }
 
@@ -182,6 +197,11 @@
   }
 
   document.addEventListener("keydown", (e) => {
+    if (e.key === "s" || e.key === "S") {
+      e.preventDefault();
+      stay();
+      return;
+    }
     const d = DIRECTIONS[e.key];
     if (!d) return;
     e.preventDefault();
@@ -191,5 +211,6 @@
   });
 
   resetBtn.addEventListener("click", reset);
+  stayBtn.addEventListener("click", stay);
   reset();
 })();

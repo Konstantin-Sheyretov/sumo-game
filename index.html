@@ -11,8 +11,9 @@
     <h1>Sumo Game</h1>
     <p id="status" aria-live="polite"></p>
     <div id="board" role="grid" aria-label="4 by 4 game board"></div>
-    <p class="hint">Click a highlighted square next to your pawn, or use the arrow keys. Moving into another pawn pushes it (and any pawns behind it). Push a pawn off the edge to knock that player out — the last pawn standing wins.</p>
+    <p class="hint">Click a highlighted square next to your pawn, or use the arrow keys. To stay where you are, click your own pawn, press <kbd>S</kbd>, or use <strong>Stay</strong>. Moving into another pawn pushes it (and any pawns behind it). Push a pawn off the edge to knock that player out — the last pawn standing wins.</p>
     <div class="controls">
+      <button id="stay" type="button">Stay</button>
       <button id="reset" type="button">Restart</button>
     </div>
     <ul id="log" aria-label="Move history"></ul>
