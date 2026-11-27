@@ -9,6 +9,7 @@
 <body>
   <main>
     <h1>Sumo Game</h1>
+    <p id="round" class="small"></p>
     <p id="status" aria-live="polite"></p>
     <div id="track" aria-label="Turn order track, leftmost acts first on ties"></div>
     <div id="board" role="grid" aria-label="4 by 4 game board"></div>
@@ -16,15 +17,21 @@
     <details class="rules">
       <summary>Rules</summary>
       <p>Each round has two phases.</p>
-      <p><strong>Planning:</strong> one by one, each player secretly picks an action — move one square
-        (↑ ↓ ← →) or stay — and a priority number from 1 to 4. Each number can be used once; after
-        you have used all four you get them all back.</p>
+      <p>Every pawn faces a direction (shown by its pointer). Each pawn starts facing the next pawn
+        clockwise.</p>
+      <p><strong>Planning:</strong> one by one, each player secretly picks a command and a priority
+        number from 1 to 4. Commands: <em>forward</em> (move one square ahead), <em>left</em> /
+        <em>right</em> (turn 90° that way, then move one square), or <em>stay</em>. Each priority
+        number can be used once; after you have used all four you get them all back.</p>
       <p><strong>Acting:</strong> plans are revealed and carried out in priority order, 1 first. On a
-        tie, whoever is further left on the track acts first. The track starts in a random order.</p>
-      <p>Moving into a pawn pushes it, and any pawns lined up behind it. A pawn pushed off the edge
-        is out. Each time you push someone, you move one place left on the track. If a planned move
-        would take you off the board when it is your turn to act, it does nothing.</p>
-      <p>The last pawn standing wins.</p>
+        tie, whoever is further left on the track acts first. The track starts in a random order.
+        In round 1 only, the player who acts last does not move.</p>
+      <p>Moving into a pawn pushes it, and any pawns lined up behind it. A pawn that is pushed or
+        walks off the edge is out. Each time you push someone, you move one place left on the
+        track.</p>
+      <p>The game ends after everyone has used all four priority tokens 5 times (20 rounds). The
+        player furthest left on the track wins — or the last pawn standing, if only one is left
+        earlier.</p>
     </details>
     <div class="controls">
       <button id="reset" type="button">Restart</button>

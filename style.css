@@ -131,6 +131,45 @@ h1 { margin: 0 0 8px; }
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+.pawn {
+  transform: rotate(var(--rot, 0deg));
+  transition: transform 0.25s;
+}
+
+.pawn .num {
+  transform: rotate(calc(-1 * var(--rot, 0deg)));
+}
+
+/* Pointer showing which way the pawn faces. */
+.pawn .nose {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 13px solid var(--fg);
+}
+
+.cmd-hint {
+  position: absolute;
+  bottom: 3px;
+  left: 0;
+  right: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.info {
+  font-size: 0.9rem;
+  min-height: 1.2em;
+}
+
+#round {
+  margin: 0;
+}
+
 .pawn.active {
   outline: 4px solid var(--fg);
   outline-offset: 3px;
@@ -151,6 +190,7 @@ h1 { margin: 0 0 8px; }
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   margin: 8px 0;
 }
