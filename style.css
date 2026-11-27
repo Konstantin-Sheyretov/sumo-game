@@ -243,6 +243,18 @@ button:disabled {
   border-color: var(--fg);
 }
 
+.act-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.secondary {
+  padding: 10px 22px;
+  font-weight: 600;
+}
+
 .small {
   font-size: 0.85rem;
   color: var(--muted);

@@ -20,11 +20,17 @@ Each round has two phases.
 
 After locking in, the plan is hidden and the device is passed to the next player.
 
-**Acting.** All plans are revealed and carried out in priority order, 1 first. Ties
-go to whoever is further left on the **track**, which starts in a random order. The
-acting order is fixed when the plans are revealed. In round 1 only, the player who
-acts last does not move.
+**Acting.** All plans are revealed. Players are taken in priority order (1 first;
+ties go to whoever is further left on the **track**, which starts in a random order;
+the order is fixed when the plans are revealed).
 
+- The first player still to act chooses to **act now** or **wait**. If they wait, the
+  next player in order chooses, and so on.
+- The last player still to act must act.
+- After someone acts, the choice starts again from the top of the order.
+- In round 1 only, the player last in priority order does not move.
+- If a pawn is pushed in the opposite direction to its planned move before it acts,
+  its move is cancelled.
 - Moving into a pawn pushes it, and any pawns lined up behind it, one square.
 - A pawn that is pushed off the edge, or walks off it, is out.
 - Each time a player's move pushes another pawn, that player moves one place left

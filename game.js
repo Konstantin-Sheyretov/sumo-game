@@ -5,7 +5,6 @@
   const PRIORITIES = [1, 2, 3, 4];
   const TOKEN_CYCLES = 5; // the game ends once every player has used all tokens this many times
   const MAX_ROUNDS = TOKEN_CYCLES * PRIORITIES.length;
-  const ACT_DELAY_MS = 900;
   const NAMES = ["Red", "Blue", "Green", "Yellow"];
 
   // Facings in clockwise order, so turning right is +1 and turning left is -1.
@@ -41,7 +40,7 @@
   const resetBtn = document.getElementById("reset");
 
   // phase: "planning" | "handoff" | "acting" | "over"
-  let players, track, round, phase, planners, planIndex, plans, draft, queue, actIndex, winner, endReason, timer;
+  let players, track, round, phase, planners, planIndex, plans, draft, queue, actIndex, winner, endReason;
 
   function shuffle(arr) {
     const a = arr.slice();
@@ -53,7 +52,6 @@
   }
 
   function reset() {
-    clearTimeout(timer);
     players = START.map((s, i) => ({
       id: i,
       name: NAMES[i],
@@ -180,34 +178,63 @@
 
   function startActing() {
     phase = "acting";
-    // Lower priority number acts first; ties go to whoever is further left on the track.
+    // Priority order: lower number first; ties go to whoever is further left on the track.
     queue = planners
-      .map((id) => ({ id, ...plans[id], skip: false }))
+      .map((id) => {
+        const target = resolveCommand(players[id], plans[id].command);
+        // `dir` is the absolute direction the move will go (null for stay).
+        return { id, ...plans[id], dir: target ? target.facing : null, done: false, outcome: "" };
+      })
       .sort((a, b) => a.priority - b.priority || track.indexOf(a.id) - track.indexOf(b.id));
-    // In the first round, the player who acts last does not get to act.
-    if (round === 1) queue[queue.length - 1].skip = true;
-    actIndex = 0;
     log(`— Round ${round}/${MAX_ROUNDS}: acting —`, "round");
     queue.forEach((q) => log(`${NAMES[q.id]} planned: priority ${q.priority}, ${commandText(q.command)}`, "plan"));
+    // In the first round, the player last in priority order does not get to act.
+    if (round === 1) {
+      const last = queue[queue.length - 1];
+      last.done = true;
+      last.outcome = "skipped (last in round 1)";
+      log(`${NAMES[last.id]} is last in priority order in round 1 and does not move.`);
+    }
+    actIndex = 0;
     render();
-    timer = setTimeout(stepActing, ACT_DELAY_MS);
   }
 
-  function stepActing() {
-    if (phase !== "acting") return;
-    const q = queue[actIndex];
-    if (q.skip) {
-      log(`${NAMES[q.id]} acts last in round 1 and does not move.`);
-    } else {
-      performCommand(players[q.id], q.command);
-    }
+  // Players who still have to act this round, in priority order.
+  function pending() {
+    return queue.filter((q) => !q.done);
+  }
+
+  // The player currently being asked whether to act now or wait.
+  function offered() {
+    return pending()[actIndex];
+  }
+
+  // The last player still to act must act.
+  function mustAct() {
+    return actIndex >= pending().length - 1;
+  }
+
+  function waitTurn() {
+    if (phase !== "acting" || mustAct()) return;
+    log(`${NAMES[offered().id]} waits.`);
     actIndex++;
+    render();
+  }
+
+  function actNow() {
+    if (phase !== "acting") return;
+    const q = offered();
+    q.done = true;
+    q.outcome = "acted";
+    performCommand(players[q.id], q.command);
+    // After someone acts, the highest-priority player still to act is asked again.
+    actIndex = 0;
 
     const remaining = alivePlayers();
     if (remaining.length === 1) {
       return endGame(remaining[0], "last pawn standing");
     }
-    if (actIndex >= queue.length) {
+    if (pending().length === 0) {
       if (round >= MAX_ROUNDS) {
         return endGame(players[track[0]], `leftmost on the track after ${TOKEN_CYCLES} full cycles of priority tokens`);
       }
@@ -216,7 +243,21 @@
       return;
     }
     render();
-    timer = setTimeout(stepActing, ACT_DELAY_MS);
+  }
+
+  function opposite(dir) {
+    return turned(dir, 2);
+  }
+
+  // Called for every pawn that was pushed (and is still on the board).
+  function cancelIfPushedBack(pawn, pushDir) {
+    if (phase !== "acting") return;
+    const q = queue.find((x) => x.id === pawn.id && !x.done);
+    if (q && q.dir && q.dir === opposite(pushDir)) {
+      q.done = true;
+      q.outcome = "cancelled";
+      log(`${pawn.name} was pushed ${pushDir}, against its planned move — its move is cancelled.`);
+    }
   }
 
   function endGame(player, reason) {
@@ -278,6 +319,14 @@
     chain
       .filter((q) => !q.alive)
       .forEach((q) => log(`${q.name} was pushed off the board by ${player.name} and is out!`, "out"));
+    chain.filter((q) => q.alive).forEach((q) => cancelIfPushedBack(q, target.facing));
+    // Pawns knocked out before acting no longer act this round.
+    queue
+      .filter((x) => !x.done && !players[x.id].alive)
+      .forEach((x) => {
+        x.done = true;
+        x.outcome = "out";
+      });
 
     track = track.filter((id) => players[id].alive);
     if (chain.length) moveLeftOnTrack(player);
@@ -313,8 +362,8 @@
     } else if (phase === "handoff") {
       text = "Planning…";
     } else if (phase === "acting") {
-      const q = queue[actIndex];
-      text = `Acting: ${NAMES[q.id]} (priority ${q.priority})`;
+      const q = offered();
+      text = mustAct() ? `${NAMES[q.id]} must act now` : `${NAMES[q.id]}: act now or wait?`;
       color = `var(--p${q.id + 1})`;
     } else {
       text = `${winner.name} wins!`;
@@ -340,7 +389,7 @@
     const planning = phase === "planning";
     const me = planning ? planner() : null;
     let actorId = null;
-    if (phase === "acting") actorId = queue[actIndex].id;
+    if (phase === "acting") actorId = offered().id;
     if (phase === "over") actorId = winner.id;
 
     // Squares the current planner can click, keyed by "row,col".
@@ -465,18 +514,42 @@
   }
 
   function renderActingPanel() {
+    const current = offered();
     const list = el("ol", { className: "queue" });
-    queue.forEach((q, i) => {
+    queue.forEach((q) => {
       let text = `${NAMES[q.id]} — priority ${q.priority}: ${commandText(q.command)}`;
-      if (q.skip) text += " (acts last in round 1: does not move)";
+      if (q.done) text += ` (${q.outcome})`;
+      else if (pending().indexOf(q) < actIndex) text += " (waiting)";
       list.append(
         el("li", {
-          className: `p-text${q.id + 1}` + (i < actIndex ? " done" : "") + (i === actIndex ? " current" : ""),
+          className: `p-text${q.id + 1}` + (q.done ? " done" : "") + (q === current ? " current" : ""),
           textContent: text,
         }),
       );
     });
-    panelEl.append(el("p", { className: "small", textContent: "Acting in priority order (ties: leftmost on the track first)" }), list);
+
+    const actB = el("button", {
+      type: "button",
+      className: "primary",
+      textContent: `Act now: ${commandText(current.command)}`,
+    });
+    actB.dataset.act = "now";
+    actB.addEventListener("click", actNow);
+    const waitB = el("button", { type: "button", textContent: "Wait", className: "secondary" });
+    waitB.dataset.act = "wait";
+    waitB.disabled = mustAct();
+    if (waitB.disabled) waitB.title = "Last player still to act — must act now";
+    waitB.addEventListener("click", waitTurn);
+
+    panelEl.append(
+      el("p", {
+        className: "small",
+        textContent: "In priority order (ties: leftmost on the track), each player acts now or waits. The last one still to act must act.",
+      }),
+      list,
+      el("div", { className: "act-buttons" }, [actB, waitB]),
+      el("p", { className: "small", textContent: "Keys: Enter act now, W wait." }),
+    );
   }
 
   function renderOverPanel() {
@@ -488,7 +561,13 @@
   // ---------- input ----------
 
   document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey || e.metaKey || e.altKey || phase !== "planning") return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (phase === "acting") {
+      if (e.key === "Enter" && e.target.tagName !== "BUTTON") actNow();
+      else if (e.key === "w" || e.key === "W") waitTurn();
+      return;
+    }
+    if (phase !== "planning") return;
     const cmd = Object.entries(COMMANDS).find(([, c]) => c.key.includes(e.key));
     if (cmd) {
       e.preventDefault();
