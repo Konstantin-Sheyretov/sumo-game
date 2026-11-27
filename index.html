@@ -10,13 +10,26 @@
   <main>
     <h1>Sumo Game</h1>
     <p id="status" aria-live="polite"></p>
+    <div id="track" aria-label="Turn order track, leftmost acts first on ties"></div>
     <div id="board" role="grid" aria-label="4 by 4 game board"></div>
-    <p class="hint">Click a highlighted square next to your pawn, or use the arrow keys. To stay where you are, click your own pawn, press <kbd>S</kbd>, or use <strong>Stay</strong>. Moving into another pawn pushes it (and any pawns behind it). Push a pawn off the edge to knock that player out — the last pawn standing wins.</p>
+    <section id="panel" aria-live="polite"></section>
+    <details class="rules">
+      <summary>Rules</summary>
+      <p>Each round has two phases.</p>
+      <p><strong>Planning:</strong> one by one, each player secretly picks an action — move one square
+        (↑ ↓ ← →) or stay — and a priority number from 1 to 4. Each number can be used once; after
+        you have used all four you get them all back.</p>
+      <p><strong>Acting:</strong> plans are revealed and carried out in priority order, 1 first. On a
+        tie, whoever is further left on the track acts first. The track starts in a random order.</p>
+      <p>Moving into a pawn pushes it, and any pawns lined up behind it. A pawn pushed off the edge
+        is out. Each time you push someone, you move one place left on the track. If a planned move
+        would take you off the board when it is your turn to act, it does nothing.</p>
+      <p>The last pawn standing wins.</p>
+    </details>
     <div class="controls">
-      <button id="stay" type="button">Stay</button>
       <button id="reset" type="button">Restart</button>
     </div>
-    <ul id="log" aria-label="Move history"></ul>
+    <ul id="log" aria-label="Game history"></ul>
   </main>
   <script src="game.js"></script>
 </body>
